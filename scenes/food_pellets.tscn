@@ -8,7 +8,6 @@ radius = 8.0
 
 [node name="FoodPellets" type="RigidBody2D"]
 contact_monitor = true
-max_contacts_reported = 1
 script = ExtResource("1_rrnno")
 
 [node name="Food" type="Sprite2D" parent="."]
