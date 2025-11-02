@@ -77,14 +77,14 @@ func _avoid_other_fish() -> Vector2:
 
     if distance < avoidance_radius and distance > 0:
       Log.info("Avoiding fish at distance: %s" % distance)
-      var push_away := global_position.direction_to(fish.global_position) * -1
-      var strength := 1.0 - (distance / avoidance_radius)
+      var push_away: Vector2 = (global_position - fish.global_position).normalized()
+      var normalized_distance: float = distance / avoidance_radius
+      var strength: float = pow(1.0 - normalized_distance, 3.0)
       seperation += push_away * strength
       nearby_fish += 1
 
   if nearby_fish > 0:
-    seperation = seperation / nearby_fish
-    seperation = seperation.normalized() * avoidance_strength
+    seperation = (seperation / nearby_fish).normalized() * avoidance_strength
 
   return seperation
 
