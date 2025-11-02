@@ -1,0 +1,38 @@
+[gd_scene load_steps=6 format=3 uid="uid://d33hhsndj625m"]
+
+[ext_resource type="Script" uid="uid://hsx03eielrmx" path="res://scripts/fish_manager.gd" id="1_uwrxv"]
+[ext_resource type="PackedScene" uid="uid://dsusrq1cq2tc8" path="res://scenes/fish.tscn" id="2_yqjtg"]
+[ext_resource type="PackedScene" uid="uid://ok0jmybjqq1w" path="res://scenes/food_spawner.tscn" id="3_lnu2h"]
+[ext_resource type="Script" uid="uid://citvov64v0qjy" path="res://scripts/ui.gd" id="4_lbhrr"]
+
+[sub_resource type="RectangleShape2D" id="RectangleShape2D_lbhrr"]
+size = Vector2(1296, 20)
+
+[node name="Game" type="Node2D"]
+
+[node name="Floor" type="StaticBody2D" parent="."]
+position = Vector2(0, 720)
+
+[node name="Collider" type="CollisionShape2D" parent="Floor"]
+position = Vector2(638, 0)
+shape = SubResource("RectangleShape2D_lbhrr")
+
+[node name="FishManager" type="Node" parent="."]
+script = ExtResource("1_uwrxv")
+fish_scene = ExtResource("2_yqjtg")
+
+[node name="FoodSpawner" parent="." instance=ExtResource("3_lnu2h")]
+
+[node name="UI" type="Control" parent="." node_paths=PackedStringArray("food_spawner")]
+layout_mode = 3
+anchors_preset = 0
+offset_right = 40.0
+offset_bottom = 40.0
+script = ExtResource("4_lbhrr")
+food_spawner = NodePath("../FoodSpawner")
+
+[node name="FoodButton" type="Button" parent="UI"]
+layout_mode = 0
+offset_right = 8.0
+offset_bottom = 8.0
+text = "Spawn Food"

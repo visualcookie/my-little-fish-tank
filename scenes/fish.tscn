@@ -1,0 +1,23 @@
+[gd_scene load_steps=4 format=3 uid="uid://dsusrq1cq2tc8"]
+
+[ext_resource type="Script" uid="uid://c4kv582066dpk" path="res://scripts/fish.gd" id="1_n6yr6"]
+[ext_resource type="Texture2D" uid="uid://dcms4youm1q6a" path="res://assets/Goldfish.png" id="2_8g0i4"]
+
+[sub_resource type="CapsuleShape2D" id="CapsuleShape2D_nub35"]
+radius = 8.0
+height = 16.0
+
+[node name="Fish" type="CharacterBody2D"]
+scale = Vector2(4, 4)
+script = ExtResource("1_n6yr6")
+
+[node name="Sprite" type="Sprite2D" parent="."]
+texture = ExtResource("2_8g0i4")
+
+[node name="Collider" type="CollisionShape2D" parent="."]
+shape = SubResource("CapsuleShape2D_nub35")
+
+[node name="Pathing" type="Line2D" parent="."]
+width = 1.0
+begin_cap_mode = 2
+end_cap_mode = 2

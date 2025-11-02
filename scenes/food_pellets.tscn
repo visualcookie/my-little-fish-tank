@@ -1,0 +1,18 @@
+[gd_scene load_steps=4 format=3 uid="uid://dwq4mf01mg2kp"]
+
+[ext_resource type="Texture2D" uid="uid://cgp0amq3cx6m5" path="res://assets/Worm.png" id="1_qffa4"]
+[ext_resource type="Script" uid="uid://dpv1nw7tf8c0j" path="res://scripts/food_pellets.gd" id="1_rrnno"]
+
+[sub_resource type="CircleShape2D" id="CircleShape2D_rrnno"]
+radius = 8.0
+
+[node name="FoodPellets" type="RigidBody2D"]
+contact_monitor = true
+max_contacts_reported = 1
+script = ExtResource("1_rrnno")
+
+[node name="Food" type="Sprite2D" parent="."]
+texture = ExtResource("1_qffa4")
+
+[node name="Collider" type="CollisionShape2D" parent="."]
+shape = SubResource("CircleShape2D_rrnno")
