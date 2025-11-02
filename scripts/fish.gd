@@ -1,5 +1,5 @@
 class_name Fish
-extends CharacterBody2D
+extends Area2D
 
 enum State {WANDER, HUNGRY, EATING, FLEEING}
 
@@ -9,18 +9,25 @@ enum State {WANDER, HUNGRY, EATING, FLEEING}
 @export var prediction_length: float = 200.0
 @export var prediction_steps: int = 20
 @export var avoidance_radius: float = 60.0
-@export var avoidance_strength: float = 3
+@export var avoidance_strength: float = 5.0
 @export var steering_speed: float = 2.0
+@export var alignment_strength: float = 0.5
 
+var velocity: Vector2 = Vector2.ZERO
 var current_state: State = State.WANDER
 var wander_direction: Vector2 = Vector2.ZERO
 var wander_timer: float = 0.0
 var current_direction: Vector2 = Vector2.ZERO
 
+var nearby_fish: Array[Fish] = []
+
 func _ready() -> void:
   add_to_group("Fish")
   _choose_new_wander_direction()
   current_direction = wander_direction
+
+  area_entered.connect(_on_nearby_fish_entered)
+  area_exited.connect(_on_nearby_fish_exited)
 
   if pathing:
     pathing.visible = OS.is_debug_build()
@@ -35,21 +42,17 @@ func _physics_process(delta: float) -> void:
   if OS.is_debug_build():
     _update_path_prediction()
 
-  move_and_slide()
+  global_position += velocity * delta
 
 func _handle_wander(delta: float) -> void:
-  var avoidance_direction := _avoid_other_fish()
-  var direction: Vector2
+  var avoidance := _avoid_other_fish()
+  var alignment := _align_with_other_fish()
 
-  if avoidance_direction.length() > 0.1:
-    direction = avoidance_direction
-  else:
-    direction = wander_direction
-
-  current_direction = current_direction.lerp(direction, steering_speed * delta).normalized()
-
-  if current_direction.length_squared() > 0.01:
-    current_direction = current_direction.normalized()
+  var avoidance_magnitude := avoidance.length()
+  var wander_weight: float = clamp(1.0 - avoidance_magnitude / avoidance_strength, 0.2, 1.0)
+  var desired_direction := ((wander_direction * wander_weight) + avoidance + alignment).normalized()
+  var steer_speed := steering_speed * (1.0 + avoidance_magnitude)
+  current_direction = current_direction.lerp(desired_direction.normalized(), steer_speed * delta).normalized()
 
   velocity = current_direction * speed
 
@@ -64,29 +67,39 @@ func _choose_new_wander_direction() -> void:
   wander_timer = randf_range(2.0, 5.0)
 
 func _avoid_other_fish() -> Vector2:
+  if nearby_fish.is_empty():
+    return Vector2.ZERO
+
   var seperation := Vector2.ZERO
-  var nearby_fish := 0
 
-  var all_fish := get_tree().get_nodes_in_group("Fish")
-
-  for fish in all_fish:
-    if fish == self:
+  for fish in nearby_fish:
+    if not is_instance_valid(fish):
       continue
 
-    var distance := global_position.distance_to(fish.global_position)
+    var to_fish := fish.global_position - global_position
+    var distance := to_fish.length()
 
-    if distance < avoidance_radius and distance > 0:
-      Log.info("Avoiding fish at distance: %s" % distance)
-      var push_away: Vector2 = (global_position - fish.global_position).normalized()
-      var normalized_distance: float = distance / avoidance_radius
-      var strength: float = pow(1.0 - normalized_distance, 3.0)
+    if distance < avoidance_radius and distance > 1.0:
+      var push_away := -to_fish.normalized()
+      var strength := 1.0 - (distance / avoidance_radius)
       seperation += push_away * strength
-      nearby_fish += 1
 
-  if nearby_fish > 0:
-    seperation = (seperation / nearby_fish).normalized() * avoidance_strength
+  Log.info("Fish %s avoidance vector: %s" % [name, seperation])
+  return seperation.normalized() * avoidance_strength if seperation.length() > 0.1 else Vector2.ZERO
 
-  return seperation
+func _align_with_other_fish() -> Vector2:
+  if nearby_fish.is_empty():
+    return Vector2.ZERO
+
+  var average_direction := Vector2.ZERO
+
+  for fish in nearby_fish:
+    if not is_instance_valid(fish):
+      continue
+
+    average_direction += fish.current_direction
+
+  return average_direction.normalized() * alignment_strength if average_direction.length() > 0.01 else Vector2.ZERO
 
 func _keep_in_bounds() -> void:
   var viewport_size: Vector2 = get_viewport().get_visible_rect().size
@@ -146,3 +159,11 @@ func _simulate_boundary_steering(sim_pos: Vector2, sim_direction: Vector2) -> vo
 func _update_visuals() -> void:
   if current_direction.x != 0:
     $Sprite.flip_h = current_direction.x < 0
+
+func _on_nearby_fish_entered(area: Area2D) -> void:
+  if area is Fish and area != self:
+    nearby_fish.append(area)
+
+func _on_nearby_fish_exited(area: Area2D) -> void:
+  if area is Fish:
+    nearby_fish.erase(area)
