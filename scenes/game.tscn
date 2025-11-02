@@ -23,16 +23,12 @@ fish_scene = ExtResource("2_yqjtg")
 
 [node name="FoodSpawner" parent="." instance=ExtResource("3_lnu2h")]
 
-[node name="UI" type="Control" parent="." node_paths=PackedStringArray("food_spawner")]
-layout_mode = 3
-anchors_preset = 0
+[node name="UI" type="Container" parent="." node_paths=PackedStringArray("food_spawner")]
 offset_right = 40.0
 offset_bottom = 40.0
 script = ExtResource("4_lbhrr")
 food_spawner = NodePath("../FoodSpawner")
 
 [node name="FoodButton" type="Button" parent="UI"]
-layout_mode = 0
-offset_right = 8.0
-offset_bottom = 8.0
+layout_mode = 2
 text = "Spawn Food"
