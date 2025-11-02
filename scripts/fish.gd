@@ -8,15 +8,21 @@ enum State {WANDER, HUNGRY, EATING, FLEEING}
 @export var speed: float = 100.0
 @export var prediction_length: float = 200.0
 @export var prediction_steps: int = 20
+@export var avoidance_radius: float = 60.0
+@export var avoidance_strength: float = 3
+@export var steering_speed: float = 2.0
 
 var current_state: State = State.WANDER
 var wander_direction: Vector2 = Vector2.ZERO
 var wander_timer: float = 0.0
+var current_direction: Vector2 = Vector2.ZERO
 
 func _ready() -> void:
+  add_to_group("Fish")
   _choose_new_wander_direction()
+  current_direction = wander_direction
 
-  if pathing != null:
+  if pathing:
     pathing.visible = OS.is_debug_build()
 
 func _physics_process(delta: float) -> void:
@@ -32,7 +38,20 @@ func _physics_process(delta: float) -> void:
   move_and_slide()
 
 func _handle_wander(delta: float) -> void:
-  velocity = wander_direction * speed
+  var avoidance_direction := _avoid_other_fish()
+  var direction: Vector2
+
+  if avoidance_direction.length() > 0.1:
+    direction = avoidance_direction
+  else:
+    direction = wander_direction
+
+  current_direction = current_direction.lerp(direction, steering_speed * delta).normalized()
+
+  if current_direction.length_squared() > 0.01:
+    current_direction = current_direction.normalized()
+
+  velocity = current_direction * speed
 
   wander_timer -= delta
   if wander_timer <= 0.0:
@@ -43,6 +62,31 @@ func _handle_wander(delta: float) -> void:
 func _choose_new_wander_direction() -> void:
   wander_direction = Vector2(randf_range(-1, 1), randf_range(-1, 1)).normalized()
   wander_timer = randf_range(2.0, 5.0)
+
+func _avoid_other_fish() -> Vector2:
+  var seperation := Vector2.ZERO
+  var nearby_fish := 0
+
+  var all_fish := get_tree().get_nodes_in_group("Fish")
+
+  for fish in all_fish:
+    if fish == self:
+      continue
+
+    var distance := global_position.distance_to(fish.global_position)
+
+    if distance < avoidance_radius and distance > 0:
+      Log.info("Avoiding fish at distance: %s" % distance)
+      var push_away := global_position.direction_to(fish.global_position) * -1
+      var strength := 1.0 - (distance / avoidance_radius)
+      seperation += push_away * strength
+      nearby_fish += 1
+
+  if nearby_fish > 0:
+    seperation = seperation / nearby_fish
+    seperation = seperation.normalized() * avoidance_strength
+
+  return seperation
 
 func _keep_in_bounds() -> void:
   var viewport_size: Vector2 = get_viewport().get_visible_rect().size
@@ -100,5 +144,5 @@ func _simulate_boundary_steering(sim_pos: Vector2, sim_direction: Vector2) -> vo
   sim_direction = sim_direction.normalized()
 
 func _update_visuals() -> void:
-  if velocity.x != 0:
-    $Sprite.flip_h = velocity.x < 0
+  if current_direction.x != 0:
+    $Sprite.flip_h = current_direction.x < 0

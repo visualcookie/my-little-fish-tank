@@ -8,8 +8,11 @@ radius = 8.0
 height = 16.0
 
 [node name="Fish" type="CharacterBody2D"]
-scale = Vector2(4, 4)
+scale = Vector2(3, 3)
 script = ExtResource("1_n6yr6")
+avoidance_radius = 80.0
+avoidance_strength = 6.0
+steering_speed = 4.0
 
 [node name="Sprite" type="Sprite2D" parent="."]
 texture = ExtResource("2_8g0i4")
