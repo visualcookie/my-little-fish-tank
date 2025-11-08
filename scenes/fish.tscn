@@ -6,12 +6,9 @@
 [sub_resource type="CircleShape2D" id="CircleShape2D_8g0i4"]
 radius = 8.0
 
-[node name="Fish" type="Area2D"]
+[node name="Fish" type="CharacterBody2D"]
 scale = Vector2(3, 3)
 script = ExtResource("1_n6yr6")
-avoidance_radius = 80.0
-avoidance_strength = 6.0
-steering_speed = 4.0
 
 [node name="Sprite" type="Sprite2D" parent="."]
 texture = ExtResource("2_8g0i4")
@@ -19,7 +16,11 @@ texture = ExtResource("2_8g0i4")
 [node name="Collider" type="CollisionShape2D" parent="."]
 shape = SubResource("CircleShape2D_8g0i4")
 
-[node name="Pathing" type="Line2D" parent="."]
-width = 1.0
-begin_cap_mode = 2
-end_cap_mode = 2
+[node name="NavigationAgent2D" type="NavigationAgent2D" parent="."]
+avoidance_enabled = true
+radius = 30.0
+neighbor_distance = 200.0
+max_neighbors = 1
+debug_enabled = true
+
+[connection signal="velocity_computed" from="NavigationAgent2D" to="." method="_on_nav_agent_velocity_computed"]

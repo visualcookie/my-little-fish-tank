@@ -2,9 +2,9 @@ extends Node
 
 @export var fish_scene: PackedScene
 
-# Max allowed fish
-const MAX_FISH: int = 20
-const INITIAL_FISH: int = 3
+# Max allowed fish in tank
+@export var MAX_FISH: int = 20
+@export var INITIAL_FISH: int = 3
 
 # Current amount of fish inside tank
 var fish_count: int = 0

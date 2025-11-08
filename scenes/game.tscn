@@ -1,29 +1,31 @@
-[gd_scene load_steps=6 format=3 uid="uid://d33hhsndj625m"]
+[gd_scene load_steps=10 format=3 uid="uid://d33hhsndj625m"]
 
 [ext_resource type="Script" uid="uid://hsx03eielrmx" path="res://scripts/fish_manager.gd" id="1_uwrxv"]
 [ext_resource type="PackedScene" uid="uid://dsusrq1cq2tc8" path="res://scenes/fish.tscn" id="2_yqjtg"]
 [ext_resource type="PackedScene" uid="uid://ok0jmybjqq1w" path="res://scenes/food_spawner.tscn" id="3_lnu2h"]
 [ext_resource type="Script" uid="uid://citvov64v0qjy" path="res://scripts/ui.gd" id="4_lbhrr"]
 
-[sub_resource type="RectangleShape2D" id="RectangleShape2D_lbhrr"]
-size = Vector2(1296, 20)
+[sub_resource type="NavigationPolygon" id="NavigationPolygon_lbhrr"]
+vertices = PackedVector2Array(1248.6406, 42.921875, 1228.1172, 616.5, 1185.0313, 673.9375, 34.921875, 662.10156, 30.03125, 38.828125, 34.390625, 34.03125)
+polygons = Array[PackedInt32Array]([PackedInt32Array(0, 1, 2, 3, 4, 5)])
+outlines = Array[PackedVector2Array]([PackedVector2Array(20, 35, 25, 672, 1190, 684, 1238, 620, 1259, 33, 30, 24)])
+
+[sub_resource type="WorldBoundaryShape2D" id="WorldBoundaryShape2D_lbhrr"]
+
+[sub_resource type="WorldBoundaryShape2D" id="WorldBoundaryShape2D_iywne"]
+normal = Vector2(1, 0)
+distance = 34.0
+
+[sub_resource type="WorldBoundaryShape2D" id="WorldBoundaryShape2D_p57ef"]
+normal = Vector2(0, 1)
+
+[sub_resource type="WorldBoundaryShape2D" id="WorldBoundaryShape2D_u5sy4"]
+normal = Vector2(-1, 0)
 
 [node name="Game" type="Node2D"]
 
-[node name="Floor" type="StaticBody2D" parent="."]
-position = Vector2(0, 720)
-
-[node name="Collider" type="CollisionShape2D" parent="Floor"]
-position = Vector2(638, 0)
-shape = SubResource("RectangleShape2D_lbhrr")
-
-[node name="FishManager" type="Node" parent="."]
-script = ExtResource("1_uwrxv")
-fish_scene = ExtResource("2_yqjtg")
-
-[node name="FoodSpawner" parent="." instance=ExtResource("3_lnu2h")]
-
 [node name="UI" type="Container" parent="." node_paths=PackedStringArray("food_spawner")]
+visible = false
 offset_right = 40.0
 offset_bottom = 40.0
 script = ExtResource("4_lbhrr")
@@ -32,3 +34,33 @@ food_spawner = NodePath("../FoodSpawner")
 [node name="FoodButton" type="Button" parent="UI"]
 layout_mode = 2
 text = "Spawn Food"
+
+[node name="NavigationRegion2D" type="NavigationRegion2D" parent="."]
+navigation_polygon = SubResource("NavigationPolygon_lbhrr")
+
+[node name="WorldBorder" type="StaticBody2D" parent="."]
+visible = false
+position = Vector2(0, 720)
+
+[node name="BottomWorldBorder" type="CollisionShape2D" parent="WorldBorder"]
+shape = SubResource("WorldBoundaryShape2D_lbhrr")
+
+[node name="LeftWorldBorder" type="CollisionShape2D" parent="WorldBorder"]
+position = Vector2(-35, -519)
+shape = SubResource("WorldBoundaryShape2D_iywne")
+
+[node name="TopWorldBorder" type="CollisionShape2D" parent="WorldBorder"]
+position = Vector2(138, -721)
+shape = SubResource("WorldBoundaryShape2D_p57ef")
+
+[node name="RightWorldBorder" type="CollisionShape2D" parent="WorldBorder"]
+position = Vector2(1280, -464)
+shape = SubResource("WorldBoundaryShape2D_u5sy4")
+
+[node name="FishManager" type="Node" parent="."]
+script = ExtResource("1_uwrxv")
+fish_scene = ExtResource("2_yqjtg")
+MAX_FISH = 50
+INITIAL_FISH = 8
+
+[node name="FoodSpawner" parent="." instance=ExtResource("3_lnu2h")]
