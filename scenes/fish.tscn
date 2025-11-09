@@ -3,8 +3,9 @@
 [ext_resource type="Script" uid="uid://c4kv582066dpk" path="res://scripts/fish.gd" id="1_n6yr6"]
 [ext_resource type="Texture2D" uid="uid://dcms4youm1q6a" path="res://assets/Goldfish.png" id="2_8g0i4"]
 
-[sub_resource type="CircleShape2D" id="CircleShape2D_8g0i4"]
-radius = 8.0
+[sub_resource type="CapsuleShape2D" id="CapsuleShape2D_8g0i4"]
+radius = 5.0
+height = 16.0
 
 [node name="Fish" type="CharacterBody2D"]
 scale = Vector2(3, 3)
@@ -14,13 +15,13 @@ script = ExtResource("1_n6yr6")
 texture = ExtResource("2_8g0i4")
 
 [node name="Collider" type="CollisionShape2D" parent="."]
-shape = SubResource("CircleShape2D_8g0i4")
+position = Vector2(0, -0.33333337)
+rotation = 1.5707964
+shape = SubResource("CapsuleShape2D_8g0i4")
 
 [node name="NavigationAgent2D" type="NavigationAgent2D" parent="."]
 avoidance_enabled = true
 radius = 30.0
 neighbor_distance = 200.0
-max_neighbors = 1
-debug_enabled = true
 
 [connection signal="velocity_computed" from="NavigationAgent2D" to="." method="_on_nav_agent_velocity_computed"]
