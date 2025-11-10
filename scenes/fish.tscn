@@ -1,7 +1,10 @@
-[gd_scene load_steps=4 format=3 uid="uid://dsusrq1cq2tc8"]
+[gd_scene load_steps=7 format=3 uid="uid://dsusrq1cq2tc8"]
 
-[ext_resource type="Script" uid="uid://c4kv582066dpk" path="res://scripts/fish.gd" id="1_n6yr6"]
+[ext_resource type="Script" uid="uid://c4kv582066dpk" path="res://scripts/fish/fish.gd" id="1_n6yr6"]
 [ext_resource type="Texture2D" uid="uid://dcms4youm1q6a" path="res://assets/Goldfish.png" id="2_8g0i4"]
+[ext_resource type="Script" uid="uid://xutu86p10t60" path="res://scripts/utils/state_machine.gd" id="3_pgks6"]
+[ext_resource type="Script" uid="uid://cq88w8bg0t72i" path="res://scripts/fish/states/wandering.gd" id="4_6lgmd"]
+[ext_resource type="Script" uid="uid://cg4jjfbg4xgvs" path="res://scripts/fish/states/conserving_energy.gd" id="5_6lgmd"]
 
 [sub_resource type="CapsuleShape2D" id="CapsuleShape2D_8g0i4"]
 radius = 5.0
@@ -23,5 +26,14 @@ shape = SubResource("CapsuleShape2D_8g0i4")
 avoidance_enabled = true
 radius = 30.0
 neighbor_distance = 200.0
+
+[node name="StateMachine" type="Node" parent="."]
+script = ExtResource("3_pgks6")
+
+[node name="Wandering" type="Node" parent="StateMachine"]
+script = ExtResource("4_6lgmd")
+
+[node name="ConservingEnergy" type="Node" parent="StateMachine"]
+script = ExtResource("5_6lgmd")
 
 [connection signal="velocity_computed" from="NavigationAgent2D" to="." method="_on_nav_agent_velocity_computed"]

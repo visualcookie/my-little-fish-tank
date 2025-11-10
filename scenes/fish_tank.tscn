@@ -1,0 +1,14 @@
+[gd_scene load_steps=3 format=3 uid="uid://dpy0pxsvafdqk"]
+
+[ext_resource type="Script" uid="uid://hsx03eielrmx" path="res://scripts/fish_manager.gd" id="1_3ejxy"]
+[ext_resource type="PackedScene" uid="uid://dsusrq1cq2tc8" path="res://scenes/fish.tscn" id="2_njb0c"]
+
+[node name="FishTank" type="Node2D"]
+
+[node name="FishManager" type="Node" parent="."]
+script = ExtResource("1_3ejxy")
+fish_scene = ExtResource("2_njb0c")
+MAX_FISH = 50
+INITIAL_FISH = 8
+
+[node name="Sprite2D" type="Sprite2D" parent="."]
