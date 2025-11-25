@@ -1,0 +1,487 @@
+# Fish Tank Simulation - Godot 4.5 GDScript Rules
+
+## Project Context
+- Engine: Godot 4.5
+- Language: GDScript
+- Project: Fish tank simulation with AI behaviors
+- Architecture: State machines, managers, component-based
+- Indent: 2 spaces (enforced by .editorconfig)
+
+## Code Style & Conventions
+
+### Naming (Project-Specific)
+- Classes/Nodes: PascalCase (`Fish`, `FishManager`, `FoodSpawner`)
+- Variables/Functions: snake_case (`current_speed`, `spawn_fish()`)
+- Constants: SCREAMING_SNAKE_CASE (`MAX_FISH`, `INITIAL_FISH`, `WANDERING`)
+- Signals: snake_case with descriptive names (`transitioned`, `food_spawned`)
+- Files: snake_case matching class name (`fish_manager.gd`, `food_spawner.gd`)
+- State constants: Defined in base state class, SCREAMING_SNAKE_CASE
+- Private variables: No underscore prefix (project doesn't use this convention)
+
+### Script Structure Order
+1. class_name (if needed)
+2. extends
+3. Signals
+4. Constants
+5. @export variables
+6. Public variables
+7. @onready variables (always type-hinted)
+8. Built-in callbacks (_ready, _process, etc.)
+9. Public methods
+10. Private methods (prefixed with _)
+
+## Project Architecture
+
+### State Machine Pattern
+- Base `State` class in `scripts/utils/state.gd`
+- Specialized state classes extend base (e.g., `FishState`)
+- State constants defined in specialized base class
+- States emit `transitioned` signal to switch states
+```gdscript
+# Example: FishState base class
+class_name FishState extends State
+
+const WANDERING = "Wandering"
+const CONSERVING_ENERGY = "ConservingEnergy"
+
+var fish: Fish
+
+func _ready() -> void:
+  await owner.ready
+  fish = owner as Fish
+  assert(fish != null, "Owner must be Fish")
+```
+
+### Manager Pattern
+- Separate managers handle spawning/lifecycle (FishManager, FoodSpawner)
+- Managers are Node-based, attached to scene tree
+- Use @export for configuration (MAX_FISH, fish_scene)
+```gdscript
+# Example: Manager pattern
+extends Node
+
+@export var fish_scene: PackedScene
+@export var MAX_FISH: int = 20
+
+var fish_count: int = 0
+
+func spawn_fish() -> void:
+  if fish_count >= MAX_FISH:
+    return
+  # spawning logic...
+```
+
+### Groups for Identification
+- Use `add_to_group()` in _ready() for categorization
+- Check groups with `is_in_group()` for collision logic
+```gdscript
+func _ready() -> void:
+  add_to_group("fish")  # or "FoodPellets", "TankFloor"
+```
+
+## Best Practices
+
+### Node References
+- Use @onready for node references - avoids null errors
+- Type hints for clarity and performance
+```gdscript
+@onready var sprite: Sprite2D = $Sprite2D
+@onready var animation_player: AnimationPlayer = $AnimationPlayer
+```
+
+### Exports
+- Always add type hints and ranges/hints for designers
+```gdscript
+@export_range(0, 100) var max_health: int = 100
+@export var speed: float = 200.0
+@export var weapon: PackedScene
+```
+
+### Signals Over Direct Calls
+- Decouple systems with signals
+```gdscript
+signal health_changed(new_health: int)
+signal died
+
+func take_damage(amount: int) -> void:
+    health -= amount
+    health_changed.emit(health)
+    if health <= 0:
+        died.emit()
+```
+
+### Performance
+
+#### Caching
+- Cache nodes and calculations, don't call get_node() repeatedly
+```gdscript
+# BAD - calls every frame
+func _process(delta):
+    get_node("Player").position += velocity * delta
+
+# GOOD - cached in _ready
+@onready var player: CharacterBody2D = $Player
+func _process(delta):
+    player.position += velocity * delta
+```
+
+#### Physics vs Process
+- Use `_physics_process()` for physics/movement (runs at fixed 60fps)
+- Use `_process()` for visuals/animations (runs every frame)
+- Use signals/timers instead of constant checking
+
+#### Node Management
+- Use object pooling for frequently spawned objects (bullets, particles)
+- Free nodes you don't need: `queue_free()` not `free()`
+- Avoid deep node hierarchies
+
+### Type Safety
+- ALWAYS use type hints - helps performance and catches errors
+```gdscript
+# Use this
+var velocity: Vector2 = Vector2.ZERO
+func calculate_damage(base: int, multiplier: float) -> int:
+    return int(base * multiplier)
+
+# Not this
+var velocity = Vector2.ZERO
+func calculate_damage(base, multiplier):
+    return base * multiplier
+```
+
+## Common Patterns (Project-Specific)
+
+### State Machine Implementation
+```gdscript
+# State transition from within a state
+extends FishState
+
+func physics_update(_delta: float) -> void:
+  fish.current_energy -= _delta * 0.1
+
+  if fish.current_energy < 10:
+    transitioned.emit(CONSERVING_ENERGY)  # Emit to switch state
+    return
+```
+
+### Navigation Pattern (Fish Movement)
+```gdscript
+# Fish uses NavigationAgent2D for pathfinding
+@onready var nav_agent: NavigationAgent2D = $NavigationAgent2D
+
+func _ready() -> void:
+  # Wait for navigation to be ready
+  await get_tree().physics_frame
+  await get_tree().physics_frame
+  nav_agent.set_velocity_forced(Vector2.ZERO)
+
+# Use velocity_computed signal for smooth movement
+func _on_nav_agent_velocity_computed(suggested_velocity: Vector2) -> void:
+  velocity = suggested_velocity
+  move_and_slide()
+
+  # Flip sprite based on direction
+  if velocity.x != 0:
+    $Sprite.flip_h = velocity.x < 0
+```
+
+### Timer Pattern (Inline Creation)
+```gdscript
+# Create timers inline when needed
+var decay_timer: Timer = Timer.new()
+add_child(decay_timer)
+decay_timer.wait_time = lifetime
+decay_timer.one_shot = true
+decay_timer.timeout.connect(_on_decay_timer_timeout)
+decay_timer.start()
+```
+
+### Logging (Custom Log System)
+```gdscript
+# Use the Log autoload for debugging
+Log.info("Fish energy: %s" % fish.current_energy)
+Log.error("State %s does not exist" % next_state_path)
+
+# String formatting with %s
+Log.info("Food spawned at position: %s" % position)
+```
+
+### Random Ranges for Variation
+```gdscript
+# Use randf_range for natural variation
+fish.current_speed = randf_range(speed_min, speed_max)
+fish.current_energy = randf_range(50, 100)
+fish.wander_timer = randf_range(3.0, 6.0)
+
+# Spawn at random viewport positions
+var viewport_size: Vector2 = get_viewport().get_visible_rect().size
+var position := Vector2(
+  randf_range(100, viewport_size.x - 100),
+  randf_range(100, viewport_size.y - 100)
+)
+```
+
+## Resource Management
+
+### Preload vs Load
+```gdscript
+# Preload - at compile time (faster, use for frequently used)
+const BULLET_SCENE = preload("res://scenes/bullet.tscn")
+
+# Load - at runtime (use for conditional/rare loading)
+var enemy_scene = load("res://scenes/enemy.tscn")
+```
+
+### ScriptableObjects (Resources)
+- Use custom Resources for data that needs to be shared/tweaked
+```gdscript
+# weapon_data.gd
+class_name WeaponData extends Resource
+
+@export var damage: int = 10
+@export var fire_rate: float = 0.5
+@export var bullet_scene: PackedScene
+```
+
+## Quick Reference (Project Patterns)
+
+### Spawning Entities
+```gdscript
+# Always instantiate, add to tree, then position
+var fish: Fish = fish_scene.instantiate()
+add_child(fish)  # Or get_tree().root.add_child(food)
+fish.global_position = spawn_position
+```
+
+### State Transitions
+```gdscript
+# From within a state
+if some_condition:
+  transitioned.emit(NEXT_STATE_NAME)
+  return  # Early return to stop current logic
+```
+
+### Viewport-Relative Positioning
+```gdscript
+var viewport_size: Vector2 = get_viewport().get_visible_rect().size
+var position := Vector2(
+  randf_range(100, viewport_size.x - 100),
+  randf_range(100, viewport_size.y - 100)
+)
+```
+
+### Signal Connections
+```gdscript
+# Connect in _ready()
+nav_agent.velocity_computed.connect(_on_nav_agent_velocity_computed)
+$FoodButton.pressed.connect(_on_food_button_pressed)
+
+# Or in scene tree (.tscn file)
+[connection signal="velocity_computed" from="NavigationAgent2D" to="." method="_on_nav_agent_velocity_computed"]
+```
+
+### Gentle Movement/Drift
+```gdscript
+# Use Time for smooth oscillation
+var time = Time.get_ticks_msec() * 0.001
+var gentle_drift = Vector2(
+  sin(time) * 8.0,
+  cos(time * 0.8) * 5.0
+)
+```
+
+## Common Extension Points
+
+### Adding New Fish States
+1. Add constant to `FishState` base class
+2. Create new state script in `scripts/fish/states/`
+3. Extend `FishState` and implement enter/physics_update
+4. Add state node to Fish scene under StateMachine
+5. Transition to it from existing states
+
+### Adding New Entity Types
+1. Create scene file in `scenes/`
+2. Create script in appropriate folder (`scripts/`)
+3. Add to group in `_ready()` for identification
+4. Create manager if needed (follow FishManager pattern)
+5. Add to NavigationRegion2D if needs pathfinding
+
+### Extending Food System
+- Different food types: Extend FoodPellets, use inheritance
+- Food effects: Pass data through state transitions
+- Food preferences: Add logic to SEARCHING_FOOD state
+
+### UI Extensions
+- Export nodes with `@export var` for easy hookup
+- Connect signals in `_ready()`
+- Keep UI separate from game logic (managers handle spawning)
+
+## Anti-Patterns to Avoid
+
+### ❌ Don't
+```gdscript
+# Forgetting to wait for navigation ready
+func _ready():
+  nav_agent.target_position = Vector2(100, 100)  # BAD: Nav not ready yet
+
+# Not checking state existence
+func _transition_to_next_state(next_state_path: String) -> void:
+  state = get_node(next_state_path)  # CRASH if doesn't exist!
+
+# Magic numbers without context
+velocity = Vector2(0, 80)  # What does 80 mean?
+
+# Not using groups for collision checks
+if body.name == "Floor":  # Fragile! Name can change
+```
+
+### ✅ Do
+```gdscript
+# Wait for navigation to initialize
+func _ready() -> void:
+  await get_tree().physics_frame
+  await get_tree().physics_frame
+  nav_agent.target_position = Vector2(100, 100)
+
+# Always validate before transitioning
+func _transition_to_next_state(next_state_path: String) -> void:
+  if not has_node(next_state_path):
+    Log.error("State %s does not exist" % next_state_path)
+    return
+  state = get_node(next_state_path)
+
+# Named constants for clarity
+@export var sink_rate: float = 80.0
+linear_velocity = Vector2(0, sink_rate)
+
+# Use groups for robust collision detection
+if body.is_in_group("TankFloor"):  # Robust!
+```
+
+## Project-Specific Best Practices
+
+### State Machine States
+- Always extend the specialized base class (FishState, not State)
+- Define state constants in the base class, not individual states
+- Use `transitioned.emit(CONSTANT)` to switch states
+- Always validate fish reference in _ready()
+```gdscript
+class_name FishState extends State
+
+const WANDERING = "Wandering"
+
+var fish: Fish
+
+func _ready() -> void:
+  await owner.ready
+  fish = owner as Fish
+  assert(fish != null, "Owner must be Fish")
+```
+
+### Navigation & Movement
+- ALWAYS await 2 physics frames before using NavigationAgent2D
+- Use `set_velocity()` or `set_velocity_forced()`, not direct velocity assignment
+- Connect to `velocity_computed` signal for smooth movement
+- Flip sprites based on velocity direction
+
+### Manager Responsibilities
+- Managers spawn and track entity counts
+- Use @export for limits (MAX_FISH) and scene references (fish_scene)
+- Don't add managers to groups - only the entities they spawn
+
+### Assertions for Critical Logic
+- Use assert() to catch setup errors early
+```gdscript
+assert(food_scene != null, "Food scene not assigned")
+assert(fish != null, "Owner must be Fish node")
+```
+
+### Logging Strategy
+- Use Log.info() for state changes and important events
+- Use Log.error() for actual errors with context
+- Include relevant data in log messages
+```gdscript
+Log.info("Fish energy: %s" % fish.current_energy)
+Log.error("%s: State %s does not exist" % [owner.name, next_state_path])
+```
+
+## When Suggesting Code
+
+1. **Follow existing patterns** - Use state machine for behaviors, managers for spawning
+2. **Match project style** - 2-space indent, type hints, @onready for nodes
+3. **Explain the "why"** - Especially for state transitions and navigation timing
+4. **Reference existing code** - Point to similar patterns in fish.gd, wandering.gd, etc.
+5. **Use Log system** - Include Log.info() for debugging new features
+6. **Groups over names** - Use groups for collision/categorization logic
+7. **NavigationAgent2D quirks** - Always mention the 2-frame await requirement
+8. **State constants** - Remind to add new state constants to the base class
+
+### Example: Adding New Fish State
+```gdscript
+# 1. Add constant to fish_state.gd
+const EATING = "Eating"
+
+# 2. Create eating.gd in scripts/fish/states/
+extends FishState
+
+func enter(previous_state_path: String, data := {}) -> void:
+  Log.info("Fish started eating")
+  # eating logic...
+
+func physics_update(_delta: float) -> void:
+  # consume food, transition when done
+  if food_consumed:
+    transitioned.emit(WANDERING)
+
+# 3. Add Eating node to Fish scene under StateMachine
+```
+
+## Testing & Debugging
+
+- Use `print_debug()` over `print()` for easier filtering
+- Use `assert()` for sanity checks during development
+- Test with different window sizes/aspect ratios
+- Profile with built-in profiler (Debug > Profiler)
+
+## File Organization (Current Project)
+
+```
+res://
+├── addons/
+│   └── logger/          # Custom logging plugin (Log autoload)
+├── assets/
+│   ├── Goldfish.png
+│   └── Worm.png
+├── scenes/              # All .tscn files
+│   ├── fish.tscn
+│   ├── fish_tank.tscn
+│   ├── food_pellets.tscn
+│   ├── food_spawner.tscn
+│   └── game.tscn
+├── scripts/
+│   ├── fish/           # Fish-specific logic
+│   │   ├── fish.gd
+│   │   └── states/     # Fish state machine states
+│   │       ├── fish_state.gd       # Base class
+│   │       ├── wandering.gd
+│   │       └── conserving_energy.gd
+│   ├── utils/          # Reusable utilities
+│   │   ├── state.gd
+│   │   └── state_machine.gd
+│   ├── fish_manager.gd
+│   ├── food_pellets.gd
+│   ├── food_spawner.gd
+│   └── ui.gd
+├── project.godot
+└── .editorconfig       # 2-space indentation
+```
+
+### Folder Color Conventions
+```gdscript
+# From project.godot
+"res://assets/": "red"      # Visual assets
+"res://data/": "blue"       # Data/resources
+"res://resources/": "purple" # Custom resources
+"res://scenes/": "pink"     # Scene files
+"res://scripts/": "yellow"  # Code files
+```
