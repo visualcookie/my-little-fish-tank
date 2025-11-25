@@ -1,14 +1,16 @@
-[gd_scene load_steps=10 format=3 uid="uid://d33hhsndj625m"]
+[gd_scene load_steps=14 format=3 uid="uid://d33hhsndj625m"]
 
 [ext_resource type="Script" uid="uid://hsx03eielrmx" path="res://scripts/fish_manager.gd" id="1_uwrxv"]
 [ext_resource type="PackedScene" uid="uid://dsusrq1cq2tc8" path="res://scenes/fish.tscn" id="2_yqjtg"]
 [ext_resource type="PackedScene" uid="uid://ok0jmybjqq1w" path="res://scenes/food_spawner.tscn" id="3_lnu2h"]
 [ext_resource type="Script" uid="uid://citvov64v0qjy" path="res://scripts/ui.gd" id="4_lbhrr"]
+[ext_resource type="Script" uid="uid://c2m6pts0y67q2" path="res://scripts/ui/currency_display.gd" id="6_currency"]
+[ext_resource type="Script" uid="uid://ddtbskn8cgmi4" path="res://scripts/ui/upgrade_panel.gd" id="7_upgrade"]
 
 [sub_resource type="NavigationPolygon" id="NavigationPolygon_lbhrr"]
-vertices = PackedVector2Array(1248.6406, 42.921875, 1228.1172, 616.5, 1185.0313, 673.9375, 34.921875, 662.10156, 30.03125, 38.828125, 34.390625, 34.03125)
-polygons = Array[PackedInt32Array]([PackedInt32Array(0, 1, 2, 3, 4, 5)])
-outlines = Array[PackedVector2Array]([PackedVector2Array(20, 35, 25, 672, 1190, 684, 1238, 620, 1259, 33, 30, 24)])
+vertices = PackedVector2Array(1249.1719, 42.921875, 1256.8125, 459.95313, 34.882813, 454.03906, 30.039063, 38.8125, 34.390625, 34.03125)
+polygons = Array[PackedInt32Array]([PackedInt32Array(0, 1, 2, 3, 4)])
+outlines = Array[PackedVector2Array]([PackedVector2Array(20, 35, 25, 464, 1267, 470, 1259, 33, 30, 24)])
 
 [sub_resource type="WorldBoundaryShape2D" id="WorldBoundaryShape2D_lbhrr"]
 
@@ -22,45 +24,309 @@ normal = Vector2(0, 1)
 [sub_resource type="WorldBoundaryShape2D" id="WorldBoundaryShape2D_u5sy4"]
 normal = Vector2(-1, 0)
 
+[sub_resource type="StyleBoxFlat" id="StyleBoxFlat_1"]
+bg_color = Color(0.2, 0.2, 0.2, 1)
+
+[sub_resource type="StyleBoxFlat" id="StyleBoxFlat_2"]
+bg_color = Color(0.3, 0.3, 0.3, 1)
+
 [node name="Game" type="Node2D"]
 
-[node name="UI" type="Container" parent="." node_paths=PackedStringArray("food_spawner")]
-visible = false
-offset_right = 40.0
-offset_bottom = 40.0
-script = ExtResource("4_lbhrr")
-food_spawner = NodePath("../FoodSpawner")
+[node name="Background" type="ColorRect" parent="."]
+offset_right = 1280.0
+offset_bottom = 720.0
+color = Color(0.4, 0.3, 0.2, 1)
 
-[node name="FoodButton" type="Button" parent="UI"]
-layout_mode = 2
-text = "Spawn Food"
+[node name="FishTankArea" type="Node2D" parent="."]
 
-[node name="NavigationRegion2D" type="NavigationRegion2D" parent="."]
+[node name="NavigationRegion2D" type="NavigationRegion2D" parent="FishTankArea"]
 navigation_polygon = SubResource("NavigationPolygon_lbhrr")
 
-[node name="WorldBorder" type="StaticBody2D" parent="."]
+[node name="WorldBorder" type="StaticBody2D" parent="FishTankArea"]
 visible = false
 position = Vector2(0, 720)
 
-[node name="BottomWorldBorder" type="CollisionShape2D" parent="WorldBorder"]
+[node name="BottomWorldBorder" type="CollisionShape2D" parent="FishTankArea/WorldBorder"]
 shape = SubResource("WorldBoundaryShape2D_lbhrr")
 
-[node name="LeftWorldBorder" type="CollisionShape2D" parent="WorldBorder"]
+[node name="LeftWorldBorder" type="CollisionShape2D" parent="FishTankArea/WorldBorder"]
 position = Vector2(-35, -519)
 shape = SubResource("WorldBoundaryShape2D_iywne")
 
-[node name="TopWorldBorder" type="CollisionShape2D" parent="WorldBorder"]
+[node name="TopWorldBorder" type="CollisionShape2D" parent="FishTankArea/WorldBorder"]
 position = Vector2(138, -721)
 shape = SubResource("WorldBoundaryShape2D_p57ef")
 
-[node name="RightWorldBorder" type="CollisionShape2D" parent="WorldBorder"]
+[node name="RightWorldBorder" type="CollisionShape2D" parent="FishTankArea/WorldBorder"]
 position = Vector2(1280, -464)
 shape = SubResource("WorldBoundaryShape2D_u5sy4")
 
-[node name="FishManager" type="Node" parent="."]
+[node name="FishManager" type="Node" parent="FishTankArea"]
 script = ExtResource("1_uwrxv")
 fish_scene = ExtResource("2_yqjtg")
 MAX_FISH = 50
 INITIAL_FISH = 8
 
-[node name="FoodSpawner" parent="." instance=ExtResource("3_lnu2h")]
+[node name="FoodSpawner" parent="FishTankArea" instance=ExtResource("3_lnu2h")]
+
+[node name="UICanvas" type="CanvasLayer" parent="."]
+
+[node name="UI" type="Control" parent="UICanvas" node_paths=PackedStringArray("fish_manager", "food_spawner")]
+layout_mode = 3
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+script = ExtResource("4_lbhrr")
+fish_manager = NodePath("../../FishTankArea/FishManager")
+food_spawner = NodePath("../../FishTankArea/FoodSpawner")
+
+[node name="FishTankViewport" type="Control" parent="UICanvas/UI"]
+layout_mode = 1
+anchors_preset = 2
+anchor_top = 1.0
+anchor_bottom = 1.0
+offset_top = -500.0
+offset_right = 1280.0
+grow_vertical = 0
+
+[node name="UIPanel" type="Panel" parent="UICanvas/UI"]
+layout_mode = 1
+anchors_preset = 3
+anchor_left = 1.0
+anchor_top = 1.0
+anchor_right = 1.0
+anchor_bottom = 1.0
+offset_left = -1280.0
+offset_top = -220.0
+grow_horizontal = 0
+grow_vertical = 0
+theme_override_styles/panel = SubResource("StyleBoxFlat_1")
+
+[node name="ContentArea" type="HBoxContainer" parent="UICanvas/UI/UIPanel"]
+layout_mode = 1
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+
+[node name="TabContainer" type="TabContainer" parent="UICanvas/UI/UIPanel/ContentArea"]
+layout_mode = 2
+size_flags_horizontal = 3
+current_tab = 0
+
+[node name="FISH" type="Panel" parent="UICanvas/UI/UIPanel/ContentArea/TabContainer"]
+layout_mode = 2
+theme_override_styles/panel = SubResource("StyleBoxFlat_2")
+metadata/_tab_index = 0
+
+[node name="Label" type="Label" parent="UICanvas/UI/UIPanel/ContentArea/TabContainer/FISH"]
+layout_mode = 1
+anchors_preset = 8
+anchor_left = 0.5
+anchor_top = 0.5
+anchor_right = 0.5
+anchor_bottom = 0.5
+offset_left = -50.0
+offset_top = -10.0
+offset_right = 50.0
+offset_bottom = 10.0
+grow_horizontal = 2
+grow_vertical = 2
+text = "Fish List
+(Placeholder)"
+horizontal_alignment = 1
+vertical_alignment = 1
+
+[node name="UPGRADES" type="Panel" parent="UICanvas/UI/UIPanel/ContentArea/TabContainer"]
+visible = false
+layout_mode = 2
+theme_override_styles/panel = SubResource("StyleBoxFlat_2")
+metadata/_tab_index = 1
+
+[node name="ScrollContainer" type="ScrollContainer" parent="UICanvas/UI/UIPanel/ContentArea/TabContainer/UPGRADES"]
+layout_mode = 1
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+
+[node name="UpgradesGrid" type="GridContainer" parent="UICanvas/UI/UIPanel/ContentArea/TabContainer/UPGRADES/ScrollContainer"]
+layout_mode = 2
+columns = 4
+
+[node name="BetterFilter" type="VBoxContainer" parent="UICanvas/UI/UIPanel/ContentArea/TabContainer/UPGRADES/ScrollContainer/UpgradesGrid"]
+layout_mode = 2
+
+[node name="Icon" type="Label" parent="UICanvas/UI/UIPanel/ContentArea/TabContainer/UPGRADES/ScrollContainer/UpgradesGrid/BetterFilter"]
+layout_mode = 2
+text = "[Filter Icon]"
+horizontal_alignment = 1
+
+[node name="Name" type="Label" parent="UICanvas/UI/UIPanel/ContentArea/TabContainer/UPGRADES/ScrollContainer/UpgradesGrid/BetterFilter"]
+layout_mode = 2
+text = "BETTER FILTER"
+horizontal_alignment = 1
+
+[node name="Cost" type="Label" parent="UICanvas/UI/UIPanel/ContentArea/TabContainer/UPGRADES/ScrollContainer/UpgradesGrid/BetterFilter"]
+layout_mode = 2
+text = "100 Gold"
+horizontal_alignment = 1
+
+[node name="BuyButton" type="Button" parent="UICanvas/UI/UIPanel/ContentArea/TabContainer/UPGRADES/ScrollContainer/UpgradesGrid/BetterFilter"]
+layout_mode = 2
+text = "Buy"
+
+[node name="WarmHeater" type="VBoxContainer" parent="UICanvas/UI/UIPanel/ContentArea/TabContainer/UPGRADES/ScrollContainer/UpgradesGrid"]
+layout_mode = 2
+
+[node name="Icon" type="Label" parent="UICanvas/UI/UIPanel/ContentArea/TabContainer/UPGRADES/ScrollContainer/UpgradesGrid/WarmHeater"]
+layout_mode = 2
+text = "[Heater Icon]"
+horizontal_alignment = 1
+
+[node name="Name" type="Label" parent="UICanvas/UI/UIPanel/ContentArea/TabContainer/UPGRADES/ScrollContainer/UpgradesGrid/WarmHeater"]
+layout_mode = 2
+text = "WARM HEATER"
+horizontal_alignment = 1
+
+[node name="Cost" type="Label" parent="UICanvas/UI/UIPanel/ContentArea/TabContainer/UPGRADES/ScrollContainer/UpgradesGrid/WarmHeater"]
+layout_mode = 2
+text = "65 Gold"
+horizontal_alignment = 1
+
+[node name="BuyButton" type="Button" parent="UICanvas/UI/UIPanel/ContentArea/TabContainer/UPGRADES/ScrollContainer/UpgradesGrid/WarmHeater"]
+layout_mode = 2
+text = "Buy"
+
+[node name="CozyLight" type="VBoxContainer" parent="UICanvas/UI/UIPanel/ContentArea/TabContainer/UPGRADES/ScrollContainer/UpgradesGrid"]
+layout_mode = 2
+
+[node name="Icon" type="Label" parent="UICanvas/UI/UIPanel/ContentArea/TabContainer/UPGRADES/ScrollContainer/UpgradesGrid/CozyLight"]
+layout_mode = 2
+text = "[Light Icon]"
+horizontal_alignment = 1
+
+[node name="Name" type="Label" parent="UICanvas/UI/UIPanel/ContentArea/TabContainer/UPGRADES/ScrollContainer/UpgradesGrid/CozyLight"]
+layout_mode = 2
+text = "COZY LIGHT"
+horizontal_alignment = 1
+
+[node name="Cost" type="Label" parent="UICanvas/UI/UIPanel/ContentArea/TabContainer/UPGRADES/ScrollContainer/UpgradesGrid/CozyLight"]
+layout_mode = 2
+text = "20 Gold"
+horizontal_alignment = 1
+
+[node name="BuyButton" type="Button" parent="UICanvas/UI/UIPanel/ContentArea/TabContainer/UPGRADES/ScrollContainer/UpgradesGrid/CozyLight"]
+layout_mode = 2
+text = "Buy"
+
+[node name="AutoFeeder" type="VBoxContainer" parent="UICanvas/UI/UIPanel/ContentArea/TabContainer/UPGRADES/ScrollContainer/UpgradesGrid"]
+layout_mode = 2
+
+[node name="Icon" type="Label" parent="UICanvas/UI/UIPanel/ContentArea/TabContainer/UPGRADES/ScrollContainer/UpgradesGrid/AutoFeeder"]
+layout_mode = 2
+text = "[Feeder Icon]"
+horizontal_alignment = 1
+
+[node name="Name" type="Label" parent="UICanvas/UI/UIPanel/ContentArea/TabContainer/UPGRADES/ScrollContainer/UpgradesGrid/AutoFeeder"]
+layout_mode = 2
+text = "AUTO-FEEDER"
+horizontal_alignment = 1
+
+[node name="Cost" type="Label" parent="UICanvas/UI/UIPanel/ContentArea/TabContainer/UPGRADES/ScrollContainer/UpgradesGrid/AutoFeeder"]
+layout_mode = 2
+text = "20 Gold"
+horizontal_alignment = 1
+
+[node name="BuyButton" type="Button" parent="UICanvas/UI/UIPanel/ContentArea/TabContainer/UPGRADES/ScrollContainer/UpgradesGrid/AutoFeeder"]
+layout_mode = 2
+text = "Buy"
+
+[node name="DECOR" type="Panel" parent="UICanvas/UI/UIPanel/ContentArea/TabContainer"]
+visible = false
+layout_mode = 2
+theme_override_styles/panel = SubResource("StyleBoxFlat_2")
+metadata/_tab_index = 2
+
+[node name="Label" type="Label" parent="UICanvas/UI/UIPanel/ContentArea/TabContainer/DECOR"]
+layout_mode = 1
+anchors_preset = 8
+anchor_left = 0.5
+anchor_top = 0.5
+anchor_right = 0.5
+anchor_bottom = 0.5
+offset_left = -50.0
+offset_top = -10.0
+offset_right = 50.0
+offset_bottom = 10.0
+grow_horizontal = 2
+grow_vertical = 2
+text = "Decor Items
+(Placeholder)"
+horizontal_alignment = 1
+vertical_alignment = 1
+
+[node name="SHOP" type="Panel" parent="UICanvas/UI/UIPanel/ContentArea/TabContainer"]
+visible = false
+layout_mode = 2
+theme_override_styles/panel = SubResource("StyleBoxFlat_2")
+metadata/_tab_index = 3
+
+[node name="Label" type="Label" parent="UICanvas/UI/UIPanel/ContentArea/TabContainer/SHOP"]
+layout_mode = 1
+anchors_preset = 8
+anchor_left = 0.5
+anchor_top = 0.5
+anchor_right = 0.5
+anchor_bottom = 0.5
+offset_left = -50.0
+offset_top = -10.0
+offset_right = 50.0
+offset_bottom = 10.0
+grow_horizontal = 2
+grow_vertical = 2
+text = "Shop Items
+(Placeholder)"
+horizontal_alignment = 1
+vertical_alignment = 1
+
+[node name="CurrencyPanel" type="Panel" parent="UICanvas/UI/UIPanel/ContentArea"]
+layout_mode = 2
+size_flags_horizontal = 0
+theme_override_styles/panel = SubResource("StyleBoxFlat_2")
+
+[node name="VBoxContainer" type="VBoxContainer" parent="UICanvas/UI/UIPanel/ContentArea/CurrencyPanel"]
+layout_mode = 1
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+offset_left = -80.0
+grow_horizontal = 2
+grow_vertical = 2
+theme_override_constants/separation = 5
+
+[node name="GoldLabel" type="Label" parent="UICanvas/UI/UIPanel/ContentArea/CurrencyPanel/VBoxContainer"]
+layout_mode = 2
+text = "Gold: 450"
+
+[node name="CurrencyDisplay" type="Node" parent="UICanvas/UI"]
+script = ExtResource("6_currency")
+
+[node name="UpgradePanel" type="Node" parent="UICanvas/UI"]
+script = ExtResource("7_upgrade")
+
+[node name="BuyFishButton" type="Button" parent="UICanvas/UI"]
+layout_mode = 1
+anchors_preset = 1
+anchor_left = 1.0
+anchor_right = 1.0
+offset_left = -150.0
+offset_top = 10.0
+offset_right = -10.0
+offset_bottom = 50.0
+grow_horizontal = 0
+text = "BUY FISH"
