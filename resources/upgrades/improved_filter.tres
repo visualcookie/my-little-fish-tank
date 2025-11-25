@@ -1,0 +1,13 @@
+[gd_resource type="Resource" script_class="UpgradeData" load_steps=3 format=3 uid="uid://ryed0ev5pxwd"]
+
+[ext_resource type="Script" uid="uid://b7p7upjvolwjk" path="res://scripts/upgrades/improved_filter.gd" id="1_n5erw"]
+[ext_resource type="Script" uid="uid://8ja3kfcbirsx" path="res://resources/upgrades/upgrade_data.gd" id="1_ob228"]
+
+[resource]
+script = ExtResource("1_ob228")
+upgrade_id = "improved_filter"
+display_name = "Improved Filter"
+description = "Helps to clean the fish tank less often."
+cost = 3000
+effect_script = ExtResource("1_n5erw")
+metadata/_custom_type_script = "uid://8ja3kfcbirsx"

@@ -1,0 +1,13 @@
+[gd_resource type="Resource" script_class="UpgradeData" load_steps=3 format=3 uid="uid://ch5xatnv1dq8r"]
+
+[ext_resource type="Script" uid="uid://8ja3kfcbirsx" path="res://resources/upgrades/upgrade_data.gd" id="1_t4paf"]
+[ext_resource type="Script" uid="uid://bkupmyrwl4wfx" path="res://scripts/upgrades/auto_feeder.gd" id="1_uyvx5"]
+
+[resource]
+script = ExtResource("1_t4paf")
+upgrade_id = "auto_feeder"
+display_name = "Auto Feeder"
+description = "Too lazy too feed the fish?"
+cost = 1600
+effect_script = ExtResource("1_uyvx5")
+metadata/_custom_type_script = "uid://8ja3kfcbirsx"
